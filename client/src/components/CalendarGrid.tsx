@@ -27,8 +27,8 @@ export function CalendarGrid({
   const getTasksForSlot = (date: string, time: string) => {
     const slotMinutes = timeToMinutes(time);
 
-    return tasks.filter(task => {
-      if (task.date !== date || !selectedCategories.includes(task.category)) {
+    return filteredTasks.filter(task => {
+      if (task.date !== date) {
         return false;
       }
 
@@ -39,6 +39,19 @@ export function CalendarGrid({
     });
   };
 
+  const calculateTaskHeight = (duration: number) => {
+    // Ogni slot è 60 minuti, calcoliamo l'altezza proporzionale
+    const slotsNeeded = duration / 60;
+    return Math.max(slotsNeeded * 64, 32); // 64px per slot, minimo 32px
+  };
+
+  const calculateTaskPosition = (startTime: string) => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const startHour = hours;
+    const minuteOffset = (minutes / 60) * 64; // 64px per ora
+    return minuteOffset;
+  };
+
   const getCategoryColor = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
     return category?.color || '#6B7280';
@@ -46,6 +59,8 @@ export function CalendarGrid({
 
   const renderTask = (task: Task) => {
     const backgroundColor = getCategoryColor(task.category);
+    const taskHeight = calculateTaskHeight(task.duration);
+    const topOffset = calculateTaskPosition(task.startTime);
 
     return (
       <div
@@ -54,11 +69,16 @@ export function CalendarGrid({
           e.stopPropagation();
           onTaskClick(task);
         }}
-        className="text-white text-xs p-2 rounded mb-1 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-        style={{ backgroundColor }}
+        className="absolute left-1 right-1 text-white text-xs p-2 rounded shadow-sm cursor-pointer hover:shadow-md transition-shadow z-10"
+        style={{ 
+          backgroundColor,
+          height: `${taskHeight}px`,
+          top: `${topOffset}px`,
+          minHeight: '32px'
+        }}
       >
         <div className="font-medium truncate">{task.title}</div>
-        <div className="opacity-90">{formatTaskTime(task.startTime, task.duration)}</div>
+        <div className="opacity-90 text-xs">{formatTaskTime(task.startTime, task.duration)}</div>
       </div>
     );
   };
@@ -105,6 +125,7 @@ export function CalendarGrid({
                     "border-r border-gray-200 last:border-r-0 p-1 relative cursor-pointer transition-colors",
                     day.isToday ? "bg-blue-50 hover:bg-blue-100" : "hover:bg-gray-50"
                   )}
+                  style={{ minHeight: '64px' }}
                 >
                   {dayTasks.map(task => renderTask(task))}
                 </div>

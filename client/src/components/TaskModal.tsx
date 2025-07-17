@@ -58,6 +58,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       reminder: "none",
       email: "",
     },
+    mode: "onChange",
   });
 
   useEffect(() => {
@@ -94,15 +95,15 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      toast({ title: "Task created successfully" });
+      toast({ title: "Task creato con successo" });
       onClose();
     },
     onError: (error: any) => {
       if (error.message.includes("409")) {
-        setConflictError("This task conflicts with an existing task. Please choose a different time.");
+        setConflictError("Questo task è in conflitto con un task esistente. Scegli un orario diverso.");
       } else {
         toast({ 
-          title: "Failed to create task", 
+          title: "Creazione task fallita", 
           description: error.message,
           variant: "destructive" 
         });
@@ -117,15 +118,15 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      toast({ title: "Task updated successfully" });
+      toast({ title: "Task aggiornato con successo" });
       onClose();
     },
     onError: (error: any) => {
       if (error.message.includes("409")) {
-        setConflictError("This task conflicts with an existing task. Please choose a different time.");
+        setConflictError("Questo task è in conflitto con un task esistente. Scegli un orario diverso.");
       } else {
         toast({ 
-          title: "Failed to update task", 
+          title: "Aggiornamento task fallito", 
           description: error.message,
           variant: "destructive" 
         });
@@ -139,12 +140,12 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      toast({ title: "Task deleted successfully" });
+      toast({ title: "Task eliminato con successo" });
       onClose();
     },
     onError: (error: any) => {
       toast({ 
-        title: "Failed to delete task", 
+        title: "Eliminazione task fallita", 
         description: error.message,
         variant: "destructive" 
       });
@@ -152,6 +153,32 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
   });
 
   const onSubmit = (data: InsertTask) => {
+    // Validazione aggiuntiva
+    if (!data.title.trim()) {
+      form.setError("title", { message: "Il titolo è obbligatorio" });
+      return;
+    }
+    
+    if (!data.date) {
+      form.setError("date", { message: "La data è obbligatoria" });
+      return;
+    }
+    
+    if (!data.startTime) {
+      form.setError("startTime", { message: "L'ora di inizio è obbligatoria" });
+      return;
+    }
+    
+    if (data.duration < 15) {
+      form.setError("duration", { message: "La durata minima è 15 minuti" });
+      return;
+    }
+    
+    if (data.reminder !== "none" && !data.email?.trim()) {
+      form.setError("email", { message: "L'email è obbligatoria per i promemoria" });
+      return;
+    }
+
     setConflictError("");
     if (task) {
       updateMutation.mutate(data);
@@ -161,17 +188,17 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
   };
 
   const handleDelete = () => {
-    if (task && window.confirm("Are you sure you want to delete this task?")) {
+    if (task && window.confirm("Sei sicuro di voler eliminare questo task?")) {
       deleteMutation.mutate();
     }
   };
 
   const reminderOptions = [
-    { value: "none", label: "No reminder" },
-    { value: "15min", label: "15 minutes before" },
-    { value: "1hour", label: "1 hour before" },
-    { value: "1day", label: "1 day before" },
-    { value: "2days", label: "2 days before" },
+    { value: "none", label: "Nessun promemoria" },
+    { value: "15min", label: "15 minuti prima" },
+    { value: "1hour", label: "1 ora prima" },
+    { value: "1day", label: "1 giorno prima" },
+    { value: "2days", label: "2 giorni prima" },
   ];
 
   return (
@@ -179,7 +206,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {task ? "Edit Task" : "Add New Task"}
+            {task ? "Modifica Task" : "Aggiungi Nuovo Task"}
           </DialogTitle>
         </DialogHeader>
 
@@ -190,9 +217,9 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Titolo*</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter task title" {...field} />
+                    <Input placeholder="Inserisci il titolo del task" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -204,10 +231,10 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>Descrizione (Opzionale)</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Enter task description" 
+                      placeholder="Inserisci la descrizione del task" 
                       rows={3}
                       {...field} 
                     />
@@ -299,11 +326,11 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
               name="reminder"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Reminder</FormLabel>
+                  <FormLabel>Promemoria Email</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select reminder time" />
+                        <SelectValue placeholder="Seleziona orario promemoria" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -319,17 +346,17 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
               )}
             />
 
-            {form.watch("reminder") && (
+            {form.watch("reminder") && form.watch("reminder") !== "none" && (
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                    <FormLabel>Indirizzo Email*</FormLabel>
                     <FormControl>
                       <Input 
                         type="email" 
-                        placeholder="Enter email for reminders"
+                        placeholder="Inserisci email per promemoria"
                         {...field} 
                       />
                     </FormControl>
@@ -356,19 +383,19 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
                     disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
+                    Elimina
                   </Button>
                 )}
               </div>
               <div className="flex space-x-2">
                 <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
+                  Annulla
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={createMutation.isPending || updateMutation.isPending}
                 >
-                  {task ? "Update Task" : "Save Task"}
+                  {task ? "Aggiorna Task" : "Salva Task"}
                 </Button>
               </div>
             </div>
