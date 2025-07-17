@@ -26,6 +26,7 @@ export function CalendarGrid({
 
   const getTasksForSlot = (date: string, time: string) => {
     const slotMinutes = timeToMinutes(time);
+    const slotEndMinutes = slotMinutes + 60;
 
     return filteredTasks.filter(task => {
       if (task.date !== date) {
@@ -33,9 +34,11 @@ export function CalendarGrid({
       }
 
       const taskStartMinutes = timeToMinutes(task.startTime);
+      const taskEndMinutes = taskStartMinutes + task.duration;
 
-      // Solo mostra il task nello slot dove inizia
-      return taskStartMinutes === slotMinutes;
+      // Mostra il task se inizia in questo slot O se è in corso durante questo slot
+      return (taskStartMinutes >= slotMinutes && taskStartMinutes < slotEndMinutes) ||
+             (taskStartMinutes < slotMinutes && taskEndMinutes > slotMinutes);
     });
   };
 
@@ -45,11 +48,18 @@ export function CalendarGrid({
     return Math.max(slotsNeeded * 64, 32); // 64px per slot, minimo 32px
   };
 
-  const calculateTaskPosition = (startTime: string) => {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const startHour = hours;
-    const minuteOffset = (minutes / 60) * 64; // 64px per ora
-    return minuteOffset;
+  const calculateTaskPosition = (startTime: string, slotTime: string) => {
+    const taskStartMinutes = timeToMinutes(startTime);
+    const slotStartMinutes = timeToMinutes(slotTime);
+    
+    // Se il task inizia in questo slot, calcola l'offset dall'inizio dello slot
+    if (taskStartMinutes >= slotStartMinutes) {
+      const minutesFromSlotStart = taskStartMinutes - slotStartMinutes;
+      return (minutesFromSlotStart / 60) * 64; // 64px per ora
+    }
+    
+    // Se il task è iniziato prima di questo slot, inizia dall'inizio dello slot
+    return 0;
   };
 
   const getCategoryColor = (categoryId: string) => {
@@ -57,10 +67,24 @@ export function CalendarGrid({
     return category?.color || '#6B7280';
   };
 
-  const renderTask = (task: Task) => {
+  const renderTask = (task: Task, slotTime: string) => {
     const backgroundColor = getCategoryColor(task.category);
-    const taskHeight = calculateTaskHeight(task.duration);
-    const topOffset = calculateTaskPosition(task.startTime);
+    const taskStartMinutes = timeToMinutes(task.startTime);
+    const slotStartMinutes = timeToMinutes(slotTime);
+    
+    // Calcola la durata effettiva da mostrare in questo slot
+    let displayDuration = task.duration;
+    if (taskStartMinutes < slotStartMinutes) {
+      // Se il task è iniziato prima di questo slot, mostra solo la parte rimanente
+      const taskEndMinutes = taskStartMinutes + task.duration;
+      displayDuration = Math.min(taskEndMinutes - slotStartMinutes, 60);
+    } else if (taskStartMinutes + task.duration > slotStartMinutes + 60) {
+      // Se il task si estende oltre questo slot, mostra solo la parte in questo slot
+      displayDuration = slotStartMinutes + 60 - taskStartMinutes;
+    }
+    
+    const taskHeight = calculateTaskHeight(displayDuration);
+    const topOffset = calculateTaskPosition(task.startTime, slotTime);
 
     return (
       <div
@@ -127,7 +151,7 @@ export function CalendarGrid({
                   )}
                   style={{ minHeight: '64px' }}
                 >
-                  {dayTasks.map(task => renderTask(task))}
+                  {dayTasks.map(task => renderTask(task, timeSlot.time))}
                 </div>
               );
             })}

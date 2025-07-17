@@ -174,7 +174,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       return;
     }
     
-    if (data.reminder !== "none" && !data.email?.trim()) {
+    if (data.reminder && data.reminder !== "none" && !data.email?.trim()) {
       form.setError("email", { message: "L'email è obbligatoria per i promemoria" });
       return;
     }
