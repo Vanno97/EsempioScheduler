@@ -55,7 +55,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       startTime: defaultTime || "",
       duration: 60,
       category: "work",
-      reminder: "",
+      reminder: "none",
       email: "",
     },
   });
@@ -69,7 +69,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
         startTime: task.startTime,
         duration: task.duration,
         category: task.category,
-        reminder: task.reminder || "",
+        reminder: task.reminder || "none",
         email: task.email || "",
       });
     } else {
@@ -80,7 +80,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
         startTime: defaultTime || "",
         duration: 60,
         category: "work",
-        reminder: "",
+        reminder: "none",
         email: "",
       });
     }
@@ -167,7 +167,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
   };
 
   const reminderOptions = [
-    { value: "", label: "No reminder" },
+    { value: "none", label: "No reminder" },
     { value: "15min", label: "15 minutes before" },
     { value: "1hour", label: "1 hour before" },
     { value: "1day", label: "1 day before" },
