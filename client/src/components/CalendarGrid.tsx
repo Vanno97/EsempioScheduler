@@ -24,17 +24,18 @@ export function CalendarGrid({
     selectedCategories.includes(task.category)
   );
 
-  const getTasksForSlot = (date: string, timeSlot: string) => {
-    return filteredTasks.filter(task => {
-      if (task.date !== date) return false;
-      
-      const taskStart = timeToMinutes(task.startTime);
-      const taskEnd = taskStart + task.duration;
-      const slotStart = timeToMinutes(timeSlot);
-      const slotEnd = slotStart + 60; // 1 hour slots
-      
-      // Task overlaps with this slot
-      return taskStart < slotEnd && taskEnd > slotStart;
+  const getTasksForSlot = (date: string, time: string) => {
+    const slotMinutes = timeToMinutes(time);
+
+    return tasks.filter(task => {
+      if (task.date !== date || !selectedCategories.includes(task.category)) {
+        return false;
+      }
+
+      const taskStartMinutes = timeToMinutes(task.startTime);
+
+      // Solo mostra il task nello slot dove inizia
+      return taskStartMinutes === slotMinutes;
     });
   };
 
@@ -45,7 +46,7 @@ export function CalendarGrid({
 
   const renderTask = (task: Task) => {
     const backgroundColor = getCategoryColor(task.category);
-    
+
     return (
       <div
         key={task.id}
@@ -92,10 +93,10 @@ export function CalendarGrid({
             <div className="border-r border-gray-200 p-2 text-right">
               <span className="text-xs text-gray-500">{timeSlot.display}</span>
             </div>
-            
+
             {weekDays.map(day => {
               const dayTasks = getTasksForSlot(day.fullDate, timeSlot.time);
-              
+
               return (
                 <div
                   key={`${day.fullDate}-${timeSlot.time}`}

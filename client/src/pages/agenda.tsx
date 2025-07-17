@@ -82,11 +82,11 @@ export default function Agenda() {
   const handleExportICS = () => {
     try {
       exportToICS(tasks);
-      toast({ title: "Calendar exported successfully" });
+      toast({ title: "Calendario esportato con successo" });
     } catch (error) {
       toast({ 
-        title: "Export failed", 
-        description: "Failed to export calendar",
+        title: "Esportazione fallita", 
+        description: "Impossibile esportare il calendario",
         variant: "destructive" 
       });
     }
@@ -95,11 +95,11 @@ export default function Agenda() {
   const handleExportCSV = () => {
     try {
       exportToCSV(tasks);
-      toast({ title: "Tasks exported successfully" });
+      toast({ title: "Attività esportate con successo" });
     } catch (error) {
       toast({ 
-        title: "Export failed", 
-        description: "Failed to export tasks",
+        title: "Esportazione fallita", 
+        description: "Impossibile esportare le attività",
         variant: "destructive" 
       });
     }
@@ -113,7 +113,7 @@ export default function Agenda() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg text-gray-600">Loading calendar...</div>
+        <div className="text-lg text-gray-600">Caricamento calendario...</div>
       </div>
     );
   }

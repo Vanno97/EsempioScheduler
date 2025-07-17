@@ -223,7 +223,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
                 name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel>Data</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -237,7 +237,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time</FormLabel>
+                    <FormLabel>Ora di Inizio</FormLabel>
                     <FormControl>
                       <Input type="time" {...field} />
                     </FormControl>
@@ -253,7 +253,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
                 name="duration"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Duration (minutes)</FormLabel>
+                    <FormLabel>Durata (minuti)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -264,7 +264,6 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
                         onChange={e => field.onChange(parseInt(e.target.value) || 0)}
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -274,11 +273,11 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>Categoria</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder="Seleziona categoria" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
