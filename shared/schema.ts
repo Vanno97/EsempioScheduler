@@ -31,7 +31,7 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
   id: true,
   reminderSent: true,
 }).extend({
-  email: z.string().email().optional(),
+  email: z.string().optional(),
 });
 
 export const updateTaskSchema = insertTaskSchema.partial().extend({

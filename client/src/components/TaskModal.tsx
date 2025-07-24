@@ -174,16 +174,24 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       return;
     }
     
+    // Solo se il promemoria è impostato, l'email diventa obbligatoria
     if (data.reminder && data.reminder !== "none" && !data.email?.trim()) {
       form.setError("email", { message: "L'email è obbligatoria per i promemoria" });
       return;
     }
 
+    // Se non c'è promemoria, rimuovi l'email dai dati
+    const finalData = { ...data };
+    if (!data.reminder || data.reminder === "none") {
+      finalData.email = undefined;
+      finalData.reminder = null;
+    }
+
     setConflictError("");
     if (task) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(finalData);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(finalData);
     }
   };
 

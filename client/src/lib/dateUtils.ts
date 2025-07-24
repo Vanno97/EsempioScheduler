@@ -1,4 +1,5 @@
 import { format, startOfWeek, addDays, parseISO, addWeeks, subWeeks } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 export function getCurrentWeekDates(currentDate: Date = new Date()) {
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday
@@ -8,7 +9,7 @@ export function getCurrentWeekDates(currentDate: Date = new Date()) {
     const date = addDays(startDate, i);
     weekDays.push({
       date: date,
-      dayName: format(date, 'EEE'),
+      dayName: format(date, 'EEE', { locale: it }),
       dayNumber: format(date, 'd'),
       fullDate: format(date, 'yyyy-MM-dd'),
       isToday: format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
@@ -25,7 +26,7 @@ export function getWeekRange(currentDate: Date = new Date()) {
   return {
     start: format(startDate, 'yyyy-MM-dd'),
     end: format(endDate, 'yyyy-MM-dd'),
-    label: `${format(startDate, 'MMM d')}-${format(endDate, 'd, yyyy')}`
+    label: `${format(startDate, 'MMM d', { locale: it })}-${format(endDate, 'd, yyyy', { locale: it })}`
   };
 }
 
@@ -62,8 +63,8 @@ export function minutesToTime(minutes: number): string {
 }
 
 export function formatTaskTime(startTime: string, duration: number): string {
-  const start = format(parseISO(`2000-01-01T${startTime}:00`), 'h:mm a');
+  const start = format(parseISO(`2000-01-01T${startTime}:00`), 'HH:mm');
   const endMinutes = timeToMinutes(startTime) + duration;
-  const end = format(parseISO(`2000-01-01T${minutesToTime(endMinutes)}:00`), 'h:mm a');
+  const end = format(parseISO(`2000-01-01T${minutesToTime(endMinutes)}:00`), 'HH:mm');
   return `${start} - ${end}`;
 }
