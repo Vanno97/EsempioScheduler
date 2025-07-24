@@ -16,6 +16,7 @@ import { queryClient } from "@/lib/queryClient";
 
 export default function Home() {
   const { user } = useAuth();
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['work', 'personal', 'health', 'urgent']);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [defaultDate, setDefaultDate] = useState("");
@@ -51,7 +52,7 @@ export default function Home() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Agenda Settimanale
             </h1>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
