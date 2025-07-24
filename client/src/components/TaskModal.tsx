@@ -174,7 +174,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       return;
     }
     
-    if (data.reminder && data.reminder !== "" && !data.email?.trim()) {
+    if (data.reminder && data.reminder !== "none" && !data.email?.trim()) {
       form.setError("email", { message: "L'email è obbligatoria per i promemoria" });
       return;
     }
@@ -194,7 +194,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
   };
 
   const reminderOptions = [
-    { value: "", label: "Nessun promemoria" },
+    { value: "none", label: "Nessun promemoria" },
     { value: "15min", label: "15 minuti prima" },
     { value: "1hour", label: "1 ora prima" },
     { value: "1day", label: "1 giorno prima" },
@@ -328,7 +328,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Promemoria Email</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || "none"}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleziona orario promemoria" />
@@ -347,7 +347,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
               )}
             />
 
-            {form.watch("reminder") && form.watch("reminder") !== "" && (
+            {form.watch("reminder") && form.watch("reminder") !== "none" && (
               <FormField
                 control={form.control}
                 name="email"

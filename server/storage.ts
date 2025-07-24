@@ -1,4 +1,4 @@
-import { tasks, type Task, type InsertTask, type UpdateTask } from "@shared/schema";
+import { tasks, users, type Task, type InsertTask, type UpdateTask, type User, type InsertUser } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -64,6 +64,10 @@ export class MemStorage implements IStorage {
     const id = this.currentTaskId++;
     const task: Task = { 
       ...insertTask, 
+      description: insertTask.description || null,
+      reminder: insertTask.reminder || null,
+      email: insertTask.email || null,
+      userId: null,
       id, 
       reminderSent: false 
     };
@@ -86,7 +90,7 @@ export class MemStorage implements IStorage {
 
   async getTasksForReminders(): Promise<Task[]> {
     return Array.from(this.tasks.values()).filter(
-      task => task.reminder && !task.reminderSent && task.email
+      task => task.reminder && task.reminder !== "none" && !task.reminderSent && task.email
     );
   }
 
