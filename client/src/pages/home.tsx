@@ -1,4 +1,10 @@
+
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Task } from "@shared/schema";
+import { getWeekRange } from "@/lib/dateUtils";
+import { exportToICS, exportToCSV } from "@/lib/exportUtils";
+import { useToast } from "@/hooks/use-toast";
 import { CalendarGrid } from "@/components/CalendarGrid";
 import { Sidebar } from "@/components/Sidebar";
 import { TaskModal } from "@/components/TaskModal";
@@ -16,11 +22,25 @@ import { queryClient } from "@/lib/queryClient";
 
 export default function Home() {
   const { user } = useAuth();
+  const [currentDate] = useState(new Date());
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['work', 'personal', 'health', 'urgent']);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [defaultDate, setDefaultDate] = useState("");
   const [defaultTime, setDefaultTime] = useState("");
+  
+  const { toast } = useToast();
+
+  const weekRange = getWeekRange(currentDate);
+
+  const { data: tasks = [] } = useQuery<Task[]>({
+    queryKey: ['/api/tasks', weekRange.start, weekRange.end],
+    queryFn: async () => {
+      const response = await fetch(`/api/tasks?startDate=${weekRange.start}&endDate=${weekRange.end}`);
+      if (!response.ok) throw new Error('Failed to fetch tasks');
+      return response.json();
+    }
+  });
 
   const handleCreateTask = (date?: string, time?: string) => {
     setSelectedTask(null);
@@ -29,7 +49,7 @@ export default function Home() {
     setIsTaskModalOpen(true);
   };
 
-  const handleEditTask = (task: any) => {
+  const handleEditTask = (task: Task) => {
     setSelectedTask(task);
     setDefaultDate("");
     setDefaultTime("");
@@ -42,6 +62,45 @@ export default function Home() {
     setDefaultDate("");
     setDefaultTime("");
   };
+
+  const handleCategoryToggle = (categoryId: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const handleExportICS = () => {
+    try {
+      exportToICS(tasks);
+      toast({ title: "Calendario esportato con successo" });
+    } catch (error) {
+      toast({ 
+        title: "Esportazione fallita", 
+        description: "Impossibile esportare il calendario",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleExportCSV = () => {
+    try {
+      exportToCSV(tasks);
+      toast({ title: "Attività esportate con successo" });
+    } catch (error) {
+      toast({ 
+        title: "Esportazione fallita", 
+        description: "Impossibile esportare le attività",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const taskCounts = tasks.reduce((counts, task) => {
+    counts[task.category] = (counts[task.category] || 0) + 1;
+    return counts;
+  }, {} as Record<string, number>);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -92,11 +151,20 @@ export default function Home() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-6">
-          <Sidebar onCreateTask={handleCreateTask} />
+          <Sidebar
+            selectedCategories={selectedCategories}
+            onCategoryToggle={handleCategoryToggle}
+            onExportICS={handleExportICS}
+            onExportCSV={handleExportCSV}
+            taskCounts={taskCounts}
+          />
           <div className="flex-1">
             <CalendarGrid 
-              onCreateTask={handleCreateTask}
-              onEditTask={handleEditTask}
+              currentDate={currentDate}
+              tasks={tasks}
+              selectedCategories={selectedCategories}
+              onTimeSlotClick={handleCreateTask}
+              onTaskClick={handleEditTask}
             />
           </div>
         </div>
