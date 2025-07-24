@@ -20,17 +20,17 @@ export function Header({
     <header className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-40">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-semibold text-gray-900">Weekly Agenda</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Agenda Settimanale</h1>
           <div className="hidden md:flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
             <Button size="sm" className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md">
-              Week
+              Settimana
             </Button>
             <Button 
               variant="ghost" 
               size="sm" 
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:bg-white rounded-md"
             >
-              Month
+              Mese
             </Button>
           </div>
         </div>
@@ -63,14 +63,14 @@ export function Header({
             onClick={onToday}
             className="px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md"
           >
-            Today
+            Oggi
           </Button>
           <Button
             onClick={onNewTask}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Task
+            Nuovo Appuntamento
           </Button>
         </div>
       </div>

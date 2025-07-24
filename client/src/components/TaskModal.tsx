@@ -174,7 +174,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       return;
     }
     
-    if (data.reminder && data.reminder !== "none" && !data.email?.trim()) {
+    if (data.reminder && data.reminder !== "" && !data.email?.trim()) {
       form.setError("email", { message: "L'email è obbligatoria per i promemoria" });
       return;
     }
@@ -188,13 +188,13 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
   };
 
   const handleDelete = () => {
-    if (task && window.confirm("Sei sicuro di voler eliminare questo task?")) {
+    if (task && window.confirm("Sei sicuro di voler eliminare questo appuntamento?")) {
       deleteMutation.mutate();
     }
   };
 
   const reminderOptions = [
-    { value: "none", label: "Nessun promemoria" },
+    { value: "", label: "Nessun promemoria" },
     { value: "15min", label: "15 minuti prima" },
     { value: "1hour", label: "1 ora prima" },
     { value: "1day", label: "1 giorno prima" },
@@ -206,7 +206,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {task ? "Modifica Task" : "Aggiungi Nuovo Task"}
+            {task ? "Modifica Appuntamento" : "Nuovo Appuntamento"}
           </DialogTitle>
         </DialogHeader>
 
@@ -236,7 +236,8 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
                     <Textarea 
                       placeholder="Inserisci la descrizione del task" 
                       rows={3}
-                      {...field} 
+                      {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -327,7 +328,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Promemoria Email</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleziona orario promemoria" />
@@ -346,7 +347,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
               )}
             />
 
-            {form.watch("reminder") && form.watch("reminder") !== "none" && (
+            {form.watch("reminder") && form.watch("reminder") !== "" && (
               <FormField
                 control={form.control}
                 name="email"
@@ -395,7 +396,7 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
                   type="submit" 
                   disabled={createMutation.isPending || updateMutation.isPending}
                 >
-                  {task ? "Aggiorna Task" : "Salva Task"}
+                  {task ? "Aggiorna Appuntamento" : "Salva Appuntamento"}
                 </Button>
               </div>
             </div>

@@ -40,9 +40,10 @@ export function getPreviousWeek(currentDate: Date): Date {
 export function getTimeSlots() {
   const slots = [];
   for (let hour = 6; hour <= 23; hour++) {
-    for (let minute = 0; minute < 60; minute += 60) {
+    // Creiamo slot ogni 30 minuti per una migliore granularità
+    for (let minute = 0; minute < 60; minute += 30) {
       const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      const display = format(parseISO(`2000-01-01T${time}:00`), 'h:mm a');
+      const display = format(parseISO(`2000-01-01T${time}:00`), 'HH:mm');
       slots.push({ time, display });
     }
   }

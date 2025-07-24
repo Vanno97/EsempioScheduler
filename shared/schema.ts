@@ -45,10 +45,10 @@ export type UpdateTask = z.infer<typeof updateTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
 
 export const categories = [
-  { id: 'work', name: 'Work', color: 'hsl(291, 64%, 42%)' },
-  { id: 'personal', name: 'Personal', color: 'hsl(122, 39%, 49%)' },
-  { id: 'health', name: 'Health', color: 'hsl(33, 100%, 50%)' },
-  { id: 'urgent', name: 'Urgent', color: 'hsl(4, 90%, 58%)' },
+  { id: 'work', name: 'Lavoro', color: 'hsl(291, 64%, 42%)' },
+  { id: 'personal', name: 'Personale', color: 'hsl(122, 39%, 49%)' },
+  { id: 'health', name: 'Salute', color: 'hsl(33, 100%, 50%)' },
+  { id: 'urgent', name: 'Urgente', color: 'hsl(4, 90%, 58%)' },
 ] as const;
 
 export type CategoryId = typeof categories[number]['id'];

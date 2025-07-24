@@ -22,7 +22,7 @@ export function Sidebar({
     <aside className="w-64 bg-white border-r border-gray-200 p-4 hidden lg:block">
       <div className="space-y-6">
         <div>
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Categories</h3>
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Categorie</h3>
           <div className="space-y-2">
             {categories.map(category => (
               <label key={category.id} className="flex items-center space-x-3 cursor-pointer">
@@ -44,7 +44,7 @@ export function Sidebar({
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Actions</h3>
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Azioni Rapide</h3>
           <div className="space-y-2">
             <Button
               variant="ghost"
@@ -53,7 +53,7 @@ export function Sidebar({
               className="w-full justify-start px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
             >
               <Download className="h-4 w-4 mr-2" />
-              Export as .ics
+              Esporta come .ics
             </Button>
             <Button
               variant="ghost"
@@ -62,7 +62,7 @@ export function Sidebar({
               className="w-full justify-start px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
             >
               <FileText className="h-4 w-4 mr-2" />
-              Export as .csv
+              Esporta come .csv
             </Button>
           </div>
         </div>
