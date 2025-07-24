@@ -1,17 +1,19 @@
-import { tasks, users, type Task, type InsertTask, type UpdateTask, type User, type UpsertUser } from "@shared/schema";
+import { tasks, users, type Task, type InsertTask, type UpdateTask, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations for Replit Auth
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  // User operations
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   
   // Task operations
-  getTasks(userId: string): Promise<Task[]>;
-  getTasksByDateRange(startDate: string, endDate: string, userId: string): Promise<Task[]>;
+  getTasks(userId: number): Promise<Task[]>;
+  getTasksByDateRange(startDate: string, endDate: string, userId: number): Promise<Task[]>;
   getTask(id: number): Promise<Task | undefined>;
-  createTask(insertTask: InsertTask, userId: string): Promise<Task>;
+  createTask(insertTask: InsertTask, userId: number): Promise<Task>;
   updateTask(updateTask: UpdateTask): Promise<Task | undefined>;
   deleteTask(id: number): Promise<boolean>;
   getTasksForReminders(): Promise<Task[]>;
@@ -19,33 +21,36 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations for Replit Auth
-  async getUser(id: string): Promise<User | undefined> {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
+      .values(insertUser)
       .returning();
     return user;
   }
 
   // Task operations
-  async getTasks(userId: string): Promise<Task[]> {
+  async getTasks(userId: number): Promise<Task[]> {
     return await db.select().from(tasks).where(eq(tasks.userId, userId));
   }
 
-  async getTasksByDateRange(startDate: string, endDate: string, userId: string): Promise<Task[]> {
+  async getTasksByDateRange(startDate: string, endDate: string, userId: number): Promise<Task[]> {
     return await db.select().from(tasks).where(
       and(
         eq(tasks.userId, userId),
@@ -60,7 +65,7 @@ export class DatabaseStorage implements IStorage {
     return task || undefined;
   }
 
-  async createTask(insertTask: InsertTask, userId: string): Promise<Task> {
+  async createTask(insertTask: InsertTask, userId: number): Promise<Task> {
     const [task] = await db
       .insert(tasks)
       .values({

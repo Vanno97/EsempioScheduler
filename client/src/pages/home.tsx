@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Home() {
   const { user } = useAuth();
@@ -68,10 +69,16 @@ export default function Home() {
                     {user?.firstName} {user?.lastName}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
+                    @{user?.username}
                   </p>
                 </div>
-                <DropdownMenuItem onClick={() => window.location.href = '/api/logout'}>
+                <DropdownMenuItem onClick={() => {
+                  fetch('/api/logout', { method: 'POST' })
+                    .then(() => {
+                      queryClient.setQueryData(["/api/user"], null);
+                      window.location.reload();
+                    });
+                }}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Disconnetti</span>
                 </DropdownMenuItem>

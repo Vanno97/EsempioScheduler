@@ -14,15 +14,16 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table for Replit Auth
+// User storage table with traditional auth
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  id: serial("id").primaryKey(),
+  username: varchar("username", { length: 50 }).unique().notNull(),
+  email: varchar("email", { length: 255 }).unique().notNull(),
+  password: text("password").notNull(), // Will store hashed passwords
+  firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const tasks = pgTable("tasks", {
@@ -36,7 +37,7 @@ export const tasks = pgTable("tasks", {
   reminder: text("reminder"), // 15min, 1hour, 1day, 2days
   email: text("email"), // email for reminders
   reminderSent: boolean("reminder_sent").default(false),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -52,12 +53,23 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
   }),
 }));
 
-export const upsertUserSchema = createInsertSchema(users).pick({
+export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
-  email: true,
-  firstName: true,
-  lastName: true,
-  profileImageUrl: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const loginSchema = z.object({
+  username: z.string().min(1, "Username è richiesto"),
+  password: z.string().min(1, "Password è richiesta"),
+});
+
+export const registerSchema = insertUserSchema.extend({
+  password: z.string().min(6, "Password deve essere almeno 6 caratteri"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Le password non corrispondono",
+  path: ["confirmPassword"],
 });
 
 export const insertTaskSchema = createInsertSchema(tasks).omit({
@@ -73,8 +85,10 @@ export const updateTaskSchema = insertTaskSchema.partial().extend({
   id: z.number(),
 });
 
-export type UpsertUser = z.infer<typeof upsertUserSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type LoginData = z.infer<typeof loginSchema>;
+export type RegisterData = z.infer<typeof registerSchema>;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
 export type Task = typeof tasks.$inferSelect;

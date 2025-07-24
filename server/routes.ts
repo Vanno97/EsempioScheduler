@@ -1,33 +1,46 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTaskSchema, updateTaskSchema, categories } from "@shared/schema";
+import { setupAuth, isAuthenticated } from "./auth";
+import { insertTaskSchema, updateTaskSchema, registerSchema, loginSchema, categories } from "@shared/schema";
 import { startReminderScheduler } from "./services/reminderScheduler";
-import { setupAuth, isAuthenticated } from "./replitAuth";
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+function checkTaskConflict(newTask: any, existingTasks: any[]) {
+  const newStartTime = parseTime(newTask.startTime);
+  const newEndTime = newStartTime + newTask.duration;
+
+  for (const task of existingTasks) {
+    if (task.date === newTask.date) {
+      const existingStartTime = parseTime(task.startTime);
+      const existingEndTime = existingStartTime + task.duration;
+
+      // Check for overlap
+      if (
+        (newStartTime < existingEndTime && newEndTime > existingStartTime)
+      ) {
+        return task;
+      }
+    }
+  }
+  return null;
+}
+
+function parseTime(timeStr: string): number {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+export function registerRoutes(app: Express): Server {
+  // Setup authentication
+  setupAuth(app);
   
   // Start the reminder scheduler
   startReminderScheduler();
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
-
   // Get all tasks (protected)
   app.get("/api/tasks", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { startDate, endDate } = req.query;
       
       let tasks;
@@ -66,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create task (protected)
   app.post("/api/tasks", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const validatedTask = insertTaskSchema.parse(req.body);
       
       // Check for conflicts
@@ -104,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = updateTaskSchema.parse({ ...req.body, id });
       
       // Check for conflicts if time/date changed
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       if (updateData.date || updateData.startTime || updateData.duration) {
         const existingTasks = await storage.getTasksByDateRange(
           updateData.date || '', 
@@ -165,28 +178,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
   return httpServer;
-}
-
-function checkTaskConflict(newTask: any, existingTasks: any[]): any | null {
-  const newStart = timeToMinutes(newTask.startTime);
-  const newEnd = newStart + newTask.duration;
-  
-  for (const task of existingTasks) {
-    if (task.date === newTask.date) {
-      const existingStart = timeToMinutes(task.startTime);
-      const existingEnd = existingStart + task.duration;
-      
-      // Check for overlap
-      if (newStart < existingEnd && newEnd > existingStart) {
-        return task;
-      }
-    }
-  }
-  
-  return null;
-}
-
-function timeToMinutes(timeString: string): number {
-  const [hours, minutes] = timeString.split(':').map(Number);
-  return hours * 60 + minutes;
 }
