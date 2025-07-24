@@ -99,6 +99,17 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       onClose();
     },
     onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Non autorizzato",
+          description: "Sei stato disconnesso. Accedi di nuovo...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
       if (error.message.includes("409")) {
         setConflictError("Questo task è in conflitto con un task esistente. Scegli un orario diverso.");
       } else {
@@ -122,6 +133,17 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       onClose();
     },
     onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Non autorizzato",
+          description: "Sei stato disconnesso. Accedi di nuovo...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
       if (error.message.includes("409")) {
         setConflictError("Questo task è in conflitto con un task esistente. Scegli un orario diverso.");
       } else {
@@ -144,6 +166,17 @@ export function TaskModal({ isOpen, onClose, task, defaultDate, defaultTime }: T
       onClose();
     },
     onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Non autorizzato",
+          description: "Sei stato disconnesso. Accedi di nuovo...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
       toast({ 
         title: "Eliminazione task fallita", 
         description: error.message,

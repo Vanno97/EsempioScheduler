@@ -15,9 +15,11 @@ The application follows a modern full-stack architecture with clear separation b
 - **Frontend**: React with TypeScript, using Vite as the build tool
 - **Backend**: Express.js server with TypeScript
 - **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: Replit Auth with OpenID Connect
 - **UI Framework**: Tailwind CSS with shadcn/ui components
 - **State Management**: TanStack Query for server state management
 - **Routing**: Wouter for client-side routing
+- **Session Management**: PostgreSQL-backed sessions with connect-pg-simple
 
 ## Key Components
 
@@ -36,23 +38,27 @@ The application follows a modern full-stack architecture with clear separation b
 - **Email Service**: SendGrid integration for email notifications
 
 ### Database Schema
-- **Users Table**: Basic user management (prepared for future use)
-- **Tasks Table**: Core task entity with fields for scheduling, categorization, and reminders
+- **Users Table**: User profiles with Replit Auth integration (id, email, names, profile image)
+- **Sessions Table**: Express session storage for authentication
+- **Tasks Table**: Core task entity with fields for scheduling, categorization, reminders, and user ownership
 - **Categories**: Predefined task categories (work, personal, health, urgent)
 
 ### Key Features
-- **Task Management**: CRUD operations for tasks with validation
+- **User Authentication**: Secure login with Replit Auth and session management
+- **Task Management**: CRUD operations for tasks with validation and user isolation
 - **Weekly Calendar View**: Visual weekly layout with time slots
 - **Email Reminders**: Automated email notifications based on task scheduling
 - **Data Export**: ICS (calendar) and CSV export functionality
 - **Category Filtering**: Filter tasks by category with visual indicators
+- **Multi-user Support**: Each user sees only their own calendar and tasks
 
 ## Data Flow
 
-1. **Task Creation**: User fills form → Validation → API call → Database storage → UI update
-2. **Calendar Display**: Date range query → Database fetch → Task rendering in calendar grid
-3. **Reminder System**: Cron job → Check pending reminders → Send emails → Mark as sent
-4. **Data Export**: Query tasks → Format data → Generate file → Download
+1. **Authentication**: User login → Replit Auth → Session creation → User profile storage
+2. **Task Creation**: User fills form → Validation → API call (authenticated) → Database storage with user ID → UI update
+3. **Calendar Display**: Date range query (user-specific) → Database fetch → Task rendering in calendar grid
+4. **Reminder System**: Cron job → Check pending reminders → Send emails → Mark as sent
+5. **Data Export**: Query user tasks → Format data → Generate file → Download
 
 ## External Dependencies
 

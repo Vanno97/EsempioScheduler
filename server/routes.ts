@@ -3,24 +3,42 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTaskSchema, updateTaskSchema, categories } from "@shared/schema";
 import { startReminderScheduler } from "./services/reminderScheduler";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware
+  await setupAuth(app);
+  
   // Start the reminder scheduler
   startReminderScheduler();
 
-  // Get all tasks
-  app.get("/api/tasks", async (req, res) => {
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Get all tasks (protected)
+  app.get("/api/tasks", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
       const { startDate, endDate } = req.query;
       
       let tasks;
       if (startDate && endDate) {
         tasks = await storage.getTasksByDateRange(
           startDate as string, 
-          endDate as string
+          endDate as string,
+          userId
         );
       } else {
-        tasks = await storage.getTasks();
+        tasks = await storage.getTasks(userId);
       }
       
       res.json(tasks);
@@ -29,8 +47,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get single task
-  app.get("/api/tasks/:id", async (req, res) => {
+  // Get single task (protected)
+  app.get("/api/tasks/:id", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const task = await storage.getTask(id);
@@ -45,15 +63,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create task
-  app.post("/api/tasks", async (req, res) => {
+  // Create task (protected)
+  app.post("/api/tasks", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const validatedTask = insertTaskSchema.parse(req.body);
       
       // Check for conflicts
       const existingTasks = await storage.getTasksByDateRange(
         validatedTask.date, 
-        validatedTask.date
+        validatedTask.date,
+        userId
       );
       
       const conflict = checkTaskConflict(validatedTask, existingTasks);
@@ -64,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const task = await storage.createTask(validatedTask);
+      const task = await storage.createTask(validatedTask, userId);
       res.status(201).json(task);
     } catch (error) {
       if (error.name === 'ZodError') {
@@ -77,17 +97,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update task
-  app.put("/api/tasks/:id", async (req, res) => {
+  // Update task (protected)
+  app.put("/api/tasks/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const updateData = updateTaskSchema.parse({ ...req.body, id });
       
       // Check for conflicts if time/date changed
+      const userId = req.user.claims.sub;
       if (updateData.date || updateData.startTime || updateData.duration) {
         const existingTasks = await storage.getTasksByDateRange(
           updateData.date || '', 
-          updateData.date || ''
+          updateData.date || '',
+          userId
         );
         
         // Filter out the current task being updated
@@ -120,8 +142,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete task
-  app.delete("/api/tasks/:id", async (req, res) => {
+  // Delete task (protected)
+  app.delete("/api/tasks/:id", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteTask(id);

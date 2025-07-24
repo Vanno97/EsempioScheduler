@@ -1,106 +1,106 @@
-import { tasks, users, type Task, type InsertTask, type UpdateTask, type User, type InsertUser } from "@shared/schema";
+import { tasks, users, type Task, type InsertTask, type UpdateTask, type User, type UpsertUser } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // User operations for Replit Auth
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
   
-  // Task management
-  getTasks(): Promise<Task[]>;
-  getTasksByDateRange(startDate: string, endDate: string): Promise<Task[]>;
+  // Task operations
+  getTasks(userId: string): Promise<Task[]>;
+  getTasksByDateRange(startDate: string, endDate: string, userId: string): Promise<Task[]>;
   getTask(id: number): Promise<Task | undefined>;
-  createTask(task: InsertTask): Promise<Task>;
-  updateTask(task: UpdateTask): Promise<Task | undefined>;
+  createTask(insertTask: InsertTask, userId: string): Promise<Task>;
+  updateTask(updateTask: UpdateTask): Promise<Task | undefined>;
   deleteTask(id: number): Promise<boolean>;
   getTasksForReminders(): Promise<Task[]>;
   markReminderSent(id: number): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private tasks: Map<number, Task>;
-  private currentUserId: number;
-  private currentTaskId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.tasks = new Map();
-    this.currentUserId = 1;
-    this.currentTaskId = 1;
+export class DatabaseStorage implements IStorage {
+  // User operations for Replit Auth
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
     return user;
   }
 
-  async getTasks(): Promise<Task[]> {
-    return Array.from(this.tasks.values());
+  // Task operations
+  async getTasks(userId: string): Promise<Task[]> {
+    return await db.select().from(tasks).where(eq(tasks.userId, userId));
   }
 
-  async getTasksByDateRange(startDate: string, endDate: string): Promise<Task[]> {
-    return Array.from(this.tasks.values()).filter(
-      task => task.date >= startDate && task.date <= endDate
+  async getTasksByDateRange(startDate: string, endDate: string, userId: string): Promise<Task[]> {
+    return await db.select().from(tasks).where(
+      and(
+        eq(tasks.userId, userId),
+        gte(tasks.date, startDate),
+        lte(tasks.date, endDate)
+      )
     );
   }
 
   async getTask(id: number): Promise<Task | undefined> {
-    return this.tasks.get(id);
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return task || undefined;
   }
 
-  async createTask(insertTask: InsertTask): Promise<Task> {
-    const id = this.currentTaskId++;
-    const task: Task = { 
-      ...insertTask, 
-      description: insertTask.description || null,
-      reminder: insertTask.reminder || null,
-      email: insertTask.email || null,
-      userId: null,
-      id, 
-      reminderSent: false 
-    };
-    this.tasks.set(id, task);
+  async createTask(insertTask: InsertTask, userId: string): Promise<Task> {
+    const [task] = await db
+      .insert(tasks)
+      .values({
+        ...insertTask,
+        userId,
+        reminderSent: false,
+      })
+      .returning();
     return task;
   }
 
   async updateTask(updateTask: UpdateTask): Promise<Task | undefined> {
-    const existingTask = this.tasks.get(updateTask.id);
-    if (!existingTask) return undefined;
-
-    const updatedTask: Task = { ...existingTask, ...updateTask };
-    this.tasks.set(updateTask.id, updatedTask);
-    return updatedTask;
+    const [task] = await db
+      .update(tasks)
+      .set(updateTask)
+      .where(eq(tasks.id, updateTask.id))
+      .returning();
+    return task || undefined;
   }
 
   async deleteTask(id: number): Promise<boolean> {
-    return this.tasks.delete(id);
+    const result = await db.delete(tasks).where(eq(tasks.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   async getTasksForReminders(): Promise<Task[]> {
-    return Array.from(this.tasks.values()).filter(
-      task => task.reminder && task.reminder !== "none" && !task.reminderSent && task.email
+    return await db.select().from(tasks).where(
+      and(
+        eq(tasks.reminderSent, false),
+        // Add conditions for reminder timing if needed
+      )
     );
   }
 
   async markReminderSent(id: number): Promise<void> {
-    const task = this.tasks.get(id);
-    if (task) {
-      task.reminderSent = true;
-      this.tasks.set(id, task);
-    }
+    await db
+      .update(tasks)
+      .set({ reminderSent: true })
+      .where(eq(tasks.id, id));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
